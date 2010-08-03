@@ -1,0 +1,30 @@
+#  Bootstrap configuration for Heritrix settings system.  If no values are 
+#  specified, sensible defaults are used.  So, an empty file is a valid 
+#  configuration.  However, the *existence* of this file is important; in the
+#  absence of a sheets-dir parameter, the settings system will use this file's
+#  path to find a subdirectory named "sheets" to get the rest of the settings.
+
+#  This file is in java.util.Properties format.
+
+
+#  The location of the sheets subdirectory.  There will be one text file per
+#  sheet in this directory.  If unspecified, the value will be "sheets"
+#  appended to the parent directory of this configuration file.
+#sheets-dir=/tmp/sheets
+
+
+#  Whether or not to copy the bdb logs during a checkpoint.  This can greatly
+#  slow down the checkpoint operation if the crawl is big.
+#bdb-checkpoint-copy-bdbje-logs=true
+
+
+#  The percentage of JVM RAM to use for the BDB database during a live crawl.  
+#  Defaults to 60%.
+#bdb-bdb-cache-percent=60
+
+
+#  The percentage of JVM RAM to use for the BDB database when loading an 
+#  inactive crawl, such as a profile or completed job.  This is just 5% to 
+#  allow an operator to view a profile or completed job while a live job is
+#  still running.
+#bdb-stub-cache-percent=5

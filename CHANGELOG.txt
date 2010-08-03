@@ -1,0 +1,68 @@
+
+heritrix-hadoop-dfs-writer-processor
+
+Changes in version 2.0.1
+------------------------
+* Upgraded to Hadoop 0.16.4
+* Fixed bug found by Ryan Smith (hardcoded Namenode location)
+
+Changes in version 2.0.0
+------------------------
+* Upgraded to Heritrix 2.0.0 and Hadoop 0.16.3
+  (contributed by Pratyush Banerjee, AOL India Pvt. Ltd.)
+
+Changes in version 1.0.1
+------------------------
+* Renamed package from hdfs-writer-processor to
+  heritrix-hadoop-dfs-writer-processor
+
+* Upgraded to Hadoop 0.12.2
+
+
+Changes in version 1.0.0
+------------------------
+* Upgraded to Heritrix 1.12.0 and Hadoop 0.12.1
+
+* Removed the "path" and "compress" settings from the
+  write-processors -> HDFSArchive section of the Settings page, since
+  they are not relevant or superseded by other fields when the
+  HDFSWriterProcessor is selected.
+
+
+Changes in version 0.1.2
+------------------------
+* Improved charset and content-type extraction
+
+* Added two more map-reduce example programs:
+  
+  1. org.archive.crawler.examples.mapred.CoutMimeTypes - For generating
+     counts for each unique Content-type encountered in crawl
+
+  2. org.archive.crawler.examples.mapred.HtmlLinkCount - For generating
+     internal and/or external link counts
+
+* Changed CountCharsets example to accept multiple input directories on
+  command line
+
+
+Changes in version 0.1.1
+------------------------
+* Fixed bug where open output files were not getting explicitly
+  closed and renamed to remove the ".open" extension
+
+* Added HDFSWriterDocument class for doing a minimal (efficient)
+  parse of the hdfs-writer-processor document format.  Among other
+  things, it fills a HashMap of the ANVL fields, gives you a pointer
+  to the request, gives you pointers to the response and message body
+  and determines the message body character encoding from the response
+  headers as well as by inspecting the document itself for charset
+  specification in the <meta http-equiv... and <?xml ... encoding=
+
+* Added an example map-reduce program called
+  org.archive.crawler.examples.mapred.CoutCharsets to demonstrate how
+  to write a map-reduce program using the output of a Heritrix crawl
+  as input.  This example program produces counts for all of the unique
+  character encodings (charsets) encountered in your crawled documents.
+  The source code for this example can be found in the file
+  src/java/org/archive/crawler/examples/mapred/CountCharsets.java in the
+  source distribution.  See README.txt for how to run it.

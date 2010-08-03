@@ -1,0 +1,204 @@
+<?xml version="1.0"?>
+
+<project name="HDFSWriterProcessor" default="compile">
+
+  <description>
+  This is the ant build file for the HDFSWriterProcessor extension to Heritrix.
+  </description>
+
+  <!-- Load all the default properties, and any the user wants    -->
+  <!-- to contribute (without having to type -D or edit this file -->
+  <property file="${user.home}/build.properties" />
+  <property file="${basedir}/build.properties" />
+ 
+  <property name="Name" value="Heritrix-Hadoop-DFS-Writer-Processor"/>
+  <property name="name" value="heritrix-hadoop-dfs-writer-processor"/>
+  <property name="version" value="2.0.1"/>
+  <property name="final.name" value="${name}-${version}"/>
+  <property name="year" value="2008"/>
+
+  <property name="src.dir" value="${basedir}/src/java"/>
+  <property name="lib.dir" value="${basedir}/lib"/>
+  <property name="docs.dir" value="${basedir}/docs"/>
+
+  <property name="build.dir" value="${basedir}/build"/>
+  <property name="build.classes" value="${build.dir}/classes"/>
+  <property name="build.src" value="${build.dir}/src"/>
+  <property name="build.platform" value="${os.name}-${os.arch}-${sun.arch.data.model}"/>
+  <property name="build.docs" value="${build.dir}/docs"/>
+  <property name="build.javadoc" value="${build.docs}/api"/>
+  <property name="build.encoding" value="ISO-8859-1"/>
+
+  <property name="test.src.dir" value="${basedir}/src/test"/>
+  <property name="test.build.dir" value="${build.dir}/test"/>
+  <property name="test.build.data" value="${test.build.dir}/data"/>
+  <property name="test.cache.data" value="${test.build.dir}/cache"/>
+  <property name="test.log.dir" value="${test.build.dir}/logs"/>
+  <property name="test.build.classes" value="${test.build.dir}/classes"/>
+  <property name="test.build.testjar" value="${test.build.dir}/testjar"/>
+  <property name="test.build.javadoc" value="${test.build.dir}/docs/api"/>
+  <property name="test.include" value="Test*"/>
+  <property name="test.classpath.id" value="test.classpath"/>
+  <property name="test.output" value="no"/>
+  <property name="test.junit.output.format" value="plain"/>
+
+  <property name="javadoc.link.java"
+	    value="http://java.sun.com/j2se/1.5/docs/api/"/>
+
+  <property name="dist.dir" value="${build.dir}/${final.name}"/>
+
+  <property name="javac.debug" value="on"/>
+  <property name="javac.optimize" value="on"/>
+  <property name="javac.deprecation" value="off"/>
+  <property name="javac.version" value="1.5"/>
+
+  <!-- the normal classpath -->
+  <path id="classpath">
+    <pathelement location="${build.classes}"/>
+    <fileset dir="${lib.dir}">
+      <include name="**/*.jar" />
+    </fileset>
+    <pathelement location="${conf.dir}"/>
+  </path>
+
+  <!-- the unit test classpath: uses test.src.dir for configuration -->
+  <path id="test.classpath">
+    <pathelement location="${test.build.classes}" />
+    <pathelement location="${test.src.dir}"/>
+    <pathelement location="${build.dir}"/>
+    <path refid="classpath"/>
+  </path>
+
+  <!-- the cluster test classpath: uses conf.dir for configuration -->
+  <path id="test.cluster.classpath">
+    <path refid="classpath"/>
+    <pathelement location="${test.build.classes}" />
+    <pathelement location="${test.src.dir}"/>
+    <pathelement location="${build.dir}"/>
+  </path>
+
+  <!-- ====================================================== -->
+  <!-- Stuff needed by all targets                            -->
+  <!-- ====================================================== -->
+  <target name="init">
+    <mkdir dir="${build.dir}"/>
+    <mkdir dir="${build.classes}"/>
+    <mkdir dir="${build.src}"/>
+ 
+    <mkdir dir="${test.build.dir}"/>
+    <mkdir dir="${test.build.classes}"/>
+    <mkdir dir="${test.build.testjar}"/>
+  </target>
+
+  <!-- ====================================================== -->
+  <!-- Compile the Java files                                 -->
+  <!-- ====================================================== -->
+  
+  <target name="compile" depends="init">
+    <javac 
+     encoding="${build.encoding}" 
+     srcdir="${src.dir};${build.src}"
+     includes="org/archive/crawler/writer/*.java,org/archive/crawler/writer/util/*.java,"
+     destdir="${build.classes}"
+     debug="${javac.debug}"
+     optimize="${javac.optimize}"
+     target="${javac.version}"
+     source="${javac.version}"
+     deprecation="${javac.deprecation}">
+      <classpath refid="classpath"/>
+    </javac>    
+  </target>
+
+  <!-- ================================================================== -->
+  <!-- Make heritrix-hadoop-dfs-writer-processor.jar                      -->
+  <!-- ================================================================== -->
+  <!--                                                                    -->
+  <!-- ================================================================== -->
+  <target name="jar" depends="compile">
+    <jar jarfile="${build.dir}/${final.name}.jar"
+            basedir="${build.classes}">
+      <manifest>
+        <section name="org/archive/crawler/writer">
+          <attribute name="Implementation-Title" value="HDFSWriterProcessor"/>
+          <attribute name="Implementation-Version" value="${version}"/>
+          <attribute name="Implementation-Vendor" value="Zvents"/>
+        </section>
+      </manifest>
+      <fileset dir="src/conf"/>
+    </jar>
+  </target>
+
+  <!-- ================================================================== -->
+  <!-- D I S T R I B U T I O N                                            -->
+  <!-- ================================================================== -->
+  <!--                                                                    -->
+  <!-- ================================================================== -->
+  <target name="package" depends="jar">
+    <mkdir dir="${dist.dir}"/>
+    <mkdir dir="${dist.dir}/lib"/>
+    <copy file="${build.dir}/${final.name}.jar" todir="${dist.dir}"/>
+    <copy todir="${dist.dir}/" file="build.xml"/>
+  </target>
+
+  <!-- ================================================================== -->
+  <!-- Make release tarball                                               -->
+  <!-- ================================================================== -->
+  <target name="tar" depends="package">
+    <copy file="${build.dir}/${final.name}.jar" todir="${lib.dir}"/>
+    <tar longfile="gnu" compression="gzip" destfile="${build.dir}/${final.name}.tar.gz">
+      <tarfileset dir="${basedir}/.." mode="664">
+        <include name="${final.name}/README.txt" />
+        <include name="${final.name}/CHANGELOG.txt" />
+        <include name="${final.name}/lib/commons-lang-2.3.jar" />
+        <include name="${final.name}/lib/commons-httpclient-3.0.1.jar" />
+        <include name="${final.name}/lib/commons-pool-1.3.jar" />
+        <include name="${final.name}/lib/hadoop-0.16.4-core.jar" />
+        <include name="${final.name}/lib/commons-2.0.1-SNAPSHOT.jar" />
+        <include name="${final.name}/lib/modules-2.0.1-SNAPSHOT.jar" />      
+        <include name="${final.name}/lib/engine-2.0.1-SNAPSHOT.jar" />
+        <include name="${final.name}/lib/fastutil-5.0.7.jar" />
+        <include name="${final.name}/lib/log4j-1.2.13.jar" />
+        <include name="${final.name}/lib/${final.name}.jar" />
+        <include name="${final.name}/sample_profiles/**" />
+      </tarfileset>
+    </tar>
+    <tar longfile="gnu" compression="gzip" destfile="${build.dir}/${final.name}-src.tar.gz">
+      <tarfileset dir="${basedir}/.." mode="664">
+        <include name="${final.name}/build.xml" />
+        <include name="${final.name}/README.txt" />
+        <include name="${final.name}/CHANGELOG.txt" />
+        <include name="${final.name}/lib/commons-lang-2.3.jar" />
+        <include name="${final.name}/lib/commons-httpclient-3.0.1.jar" />
+        <include name="${final.name}/lib/commons-pool-1.3.jar" />
+        <include name="${final.name}/lib/hadoop-0.16.4-core.jar" />
+        <include name="${final.name}/lib/commons-2.0.1-SNAPSHOT.jar" />
+        <include name="${final.name}/lib/modules-2.0.1-SNAPSHOT.jar" />      
+        <include name="${final.name}/lib/engine-2.0.1-SNAPSHOT.jar" />
+        <include name="${final.name}/lib/fastutil-5.0.7.jar" />
+        <include name="${final.name}/lib/log4j-1.2.13.jar" />
+        <include name="${final.name}/lib/${final.name}.jar" />
+        <include name="${final.name}/sample_profiles/**" />
+        <include name="${final.name}/src/**" />
+      </tarfileset>
+    </tar>
+    <delete file="${lib.dir}/${final.name}.jar" />
+  </target>
+	
+  <!-- ================================================================== -->
+  <!-- Clean.  Delete the build files, and their directories              -->
+  <!-- ================================================================== -->
+  <target name="clean">
+  	<delete dir="${build.dir}"/>
+  </target>
+
+  <!-- ================================================================== -->
+  <!-- Contrib targets. For now, they must be called explicitely          -->
+  <!-- Using subant instead of ant as a workaround for 30569              -->
+  <!-- ================================================================== -->
+  <target name="deploy-contrib" depends="compile">
+     <subant target="deploy">        
+        <fileset file="src/contrib/build.xml"/>
+     </subant>  	
+  </target>
+
+</project>
