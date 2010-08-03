@@ -23,89 +23,37 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.crawler.writer;
+package org.archive.io.hdfs;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.log4j.Logger;
 import org.archive.io.RecordingInputStream;
 import org.archive.io.RecordingOutputStream;
 import org.archive.io.ReplayInputStream;
-import org.archive.io.ArchiveFileConstants;
+import org.archive.io.WriterPoolMember;
+import org.archive.modules.CrawlURI;
 import org.archive.util.DevUtils;
 
 
-/**
- * Write Crawl output to HDFS.
- *
- * Assumption is that the caller is managing access to this HDFSWriter ensuring
- * only one thread of control accessing this HDFS file instance at any one time.
- *
- * <p>While being written, HDFS files have a '.open' suffix appended.
- *
- * @author Doug Judd
- */
-public class HDFSWriter extends WriterPoolMemberHdfs implements ArchiveFileConstants {
-    //private static final Logger logger =
-      //  Logger.getLogger(HDFSWriter.class.getName());
 
-    public String HDFSWRITER_ID = "HDFSWriter/0.2";
+public class HDFSWriter extends WriterPoolMember {
+
+	private final Logger LOG = Logger.getLogger(this.getClass().getName());
+	public String HDFSWRITER_ID = "HDFSWriter/0.2";
+
+	private HDFSParameters _parameters;
+
+	public HDFSWriter(HDFSParameters parameters) throws IOException {
+		super(null, null, null, false, null);
+		
+		this._parameters = parameters;
+	}
 
     private int mCaptureStreamCapacity = 262144;
     private ByteArrayOutputStream mCaptureStream = new ByteArrayOutputStream(262144);
 
-    /**
-     * Constructor.
-     *
-     * @param serialNo  used to generate unique file name sequences
-     * @param dirs Where to drop the ARC files.
-     * @param prefix ARC file prefix to use.  If null, we use
-     * DEFAULT_ARC_FILE_PREFIX.
-     * @param cmprs Compress the ARC files written.  The compression is done
-     * by individually gzipping each record added to the ARC file: i.e. the
-     * ARC file is a bunch of gzipped records concatenated together.
-     * @param maxSize Maximum size for ARC files written.
-     * @param hdfsReplication Replication factor for HDFS files
-     * @param hdfsCompressionType Type of SequenceFile compression to use 
-     * @param hdfsOutputPath Directory with HDFS where job content files
-     *     will get written
-     * @param hdfsFsDefaultName fs.default.name Hadoop property
-     */
-    public HDFSWriter(final AtomicInteger serialNo, final String jobDir,
-		     final String prefix, final boolean cmprs,
-		     final int maxSize, final int hdfsReplication,
-                     final String hdfsCompressionType,
-		     final String hdfsOutputPath,
-		     final String hdfsFsDefaultName) throws IOException {
-        this(serialNo, jobDir, prefix, "", cmprs, maxSize, hdfsReplication,
-	     hdfsCompressionType, hdfsOutputPath, hdfsFsDefaultName);
-    }
-            
-    /**
-     * Constructor.
-     *
-     * @param serialNo  used to generate unique file name sequences
-     * @param dirs Where to drop files.
-     * @param prefix File prefix to use.
-     * @param suffix File tail to use.  If null, unused.
-     * @param cmprs Compress the records written. 
-     * @param maxSize Maximum size for ARC files written.
-     * @param hdfsReplication Replication factor for HDFS files
-     * @param hdfsCompressionType Type of SequenceFile compression to use 
-     * @param hdfsOutputPath Directory with HDFS where job content files
-     *     will get written
-     * @param hdfsFsDefaultName fs.default.name Hadoop property
-     */
-    public HDFSWriter(final AtomicInteger serialNo, final String jobDir,
-    		final String prefix, final String suffix, final boolean cmprs,
-	        final long maxSize, final int hdfsReplication,
-		final String hdfsCompressionType, final String hdfsOutputPath,
-	        final String hdfsFsDefaultName) throws IOException {
-        super(serialNo, jobDir, prefix, suffix, cmprs, maxSize,
-	      hdfsReplication, hdfsCompressionType, hdfsOutputPath,
-	      hdfsFsDefaultName);
-    }
 
     protected String createFile()
     throws IOException {
@@ -120,11 +68,14 @@ public class HDFSWriter extends WriterPoolMemberHdfs implements ArchiveFileConst
      * @param ros recording output stream that captured the GET request (for http*)
      * @param ris recording input stream that captured the response
      */
-    public void write(String uri, byte [] fieldBytes, RecordingOutputStream ros,
+    public void write(final CrawlURI curi, byte [] fieldBytes, RecordingOutputStream ros,
 		      RecordingInputStream ris) throws IOException {
-	ReplayInputStream replayStream = null;
-        preWriteRecordTasks();
-        try {
+    	String uri = curi.toString();
+    	ReplayInputStream replayStream = null;
+        
+    	preWriteRecordTasks();
+
+    	try {
             try {
 
 		int recordLength = 256 + fieldBytes.length + (int)ros.getSize() + (int)ris.getSize();
@@ -168,7 +119,7 @@ public class HDFSWriter extends WriterPoolMemberHdfs implements ArchiveFileConst
                 if (remaining != 0) {
                     String message = "Gap between expected and actual: " +
                         remaining + "\n" + DevUtils.extraInfo() +
-                        " writing arc " + this.getFilename();
+                        " writing arc ";
                     DevUtils.warnHandle(new Throwable(message), message);
                     throw new IOException(message);
                 }
@@ -178,7 +129,7 @@ public class HDFSWriter extends WriterPoolMemberHdfs implements ArchiveFileConst
             } 
             
         } finally {
-            postWriteRecordTasks(uri);
+            postWriteRecordTasks();
         }
     }
 }

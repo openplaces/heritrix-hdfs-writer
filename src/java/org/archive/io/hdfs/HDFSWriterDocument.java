@@ -22,7 +22,7 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.crawler.writer;
+package org.archive.io.hdfs;
 
 import java.io.DataInput;
 import java.io.DataInputStream;
@@ -40,7 +40,7 @@ import java.util.Map;
 
 import org.apache.hadoop.io.Writable;
 
-import org.archive.crawler.writer.util.ByteScan;
+import org.archive.io.hdfs.util.ByteScan;
 
 
 /**
