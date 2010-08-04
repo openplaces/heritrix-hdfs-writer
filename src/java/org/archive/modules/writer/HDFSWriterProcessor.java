@@ -189,20 +189,20 @@ public class HDFSWriterProcessor extends WriterPoolProcessor {
         }
 
         UURI via = curi.getVia();
-        ANVLRecord r = new ANVLRecord();
-        r.addLabelValue(getHdfsParameters().getUrlFieldName(), curi.toString());
-        r.addLabelValue(getHdfsParameters().getIpFieldName(), getHostAddress(curi));
-        r.addLabelValue(getHdfsParameters().getCrawlTimeFieldName(),
+        ANVLRecord record = new ANVLRecord();
+        record.addLabelValue(getHdfsParameters().getUrlFieldName(), curi.toString());
+        record.addLabelValue(getHdfsParameters().getIpFieldName(), getHostAddress(curi));
+        record.addLabelValue(getHdfsParameters().getCrawlTimeFieldName(),
         		ArchiveUtils.get14DigitDate(curi.getFetchBeginTime()));
-        r.addLabelValue(getHdfsParameters().getIsSeedFieldName(), Boolean.toString(curi.isSeed()));
+        record.addLabelValue(getHdfsParameters().getIsSeedFieldName(), Boolean.toString(curi.isSeed()));
 
         if (curi.getPathFromSeed() != null && curi.getPathFromSeed().trim().length() > 0)
-        	r.addLabelValue(getHdfsParameters().getPathFromSeedFieldName(), curi.getPathFromSeed());
+        	record.addLabelValue(getHdfsParameters().getPathFromSeedFieldName(), curi.getPathFromSeed());
 
         if (via != null && via.toString().trim().length() > 0)
-        	r.addLabelValue(getHdfsParameters().getViaFieldName(), via.toString());
+        	record.addLabelValue(getHdfsParameters().getViaFieldName(), via.toString());
 
-        final byte [] namedFieldsBlock = r.getUTF8Bytes();
+        final byte [] namedFieldsBlock = record.getUTF8Bytes();
 
         HDFSWriter writer = (HDFSWriter)writerPoolMember;
         try {

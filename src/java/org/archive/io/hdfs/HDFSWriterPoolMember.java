@@ -26,20 +26,21 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.SequenceFile;
+import org.apache.hadoop.io.Text;
 import org.archive.io.ArchiveFileConstants;
+import org.archive.io.WriterPool;
 import org.archive.io.WriterPoolMember;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.TimestampSerialno;
-
-import org.apache.hadoop.io.*;
-import org.apache.hadoop.conf.*;
-import org.apache.hadoop.fs.*;
 
 
 /**
@@ -55,23 +56,6 @@ public abstract class HDFSWriterPoolMember extends WriterPoolMember implements A
 	private final Logger LOGGER = Logger.getLogger(this.getClass().getName());
 
 	/**
-	 * Default file prefix.
-	 * 
-	 * Stands for Internet Archive Heritrix.
-	 */
-	public static final String DEFAULT_PREFIX = "IAH";
-
-	/**
-	 * Value to interpolate with actual hostname.
-	 */
-	public static final String HOSTNAME_VARIABLE = "${HOSTNAME}";
-
-	/**
-	 * Default for file suffix.
-	 */
-	public static final String DEFAULT_SUFFIX = HOSTNAME_VARIABLE;
-
-	/**
 	 * Reference to file Path object we're currently writing.
 	 */
 	private Path fpath = null;
@@ -80,18 +64,6 @@ public abstract class HDFSWriterPoolMember extends WriterPoolMember implements A
 	 * Reference to file name string since it's used often
 	 */
 	private String fstr = null;
-
-	/**
-	 *  Output stream for file.
-	 */
-	@SuppressWarnings("unused")
-	private OutputStream out = null;
-
-	/**
-	 * File output stream.
-
-    private FSDataOutputStream fsdOut;
-	 */
 
 	/**
 	 * SequenceFile writer
@@ -131,12 +103,6 @@ public abstract class HDFSWriterPoolMember extends WriterPoolMember implements A
 	 * A running sequence used making unique file names.
 	 */
 	final private AtomicInteger serialNo;
-
-	/**
-	 * Directories round-robin index.
-	 */
-	@SuppressWarnings("unused")
-	private static int roundRobinIndex = 0;
 
 	/**
 	 * NumberFormat instance for formatting serial number.
@@ -220,6 +186,7 @@ public abstract class HDFSWriterPoolMember extends WriterPoolMember implements A
 	 *
 	 * @exception IOException
 	 */
+	@Override
 	public void checkSize() throws IOException {
 		if (sfWriter == null ||
 				(this.maxSize != -1 && (this.sfWriter.getLength() > this.maxSize)))
@@ -357,7 +324,7 @@ public abstract class HDFSWriterPoolMember extends WriterPoolMember implements A
 
 		if (accumBuffer.length > 1048576)
 			accumBuffer = new byte [ 262144 ];
-		
+
 		super.postWriteRecordTasks();
 	}
 
@@ -440,7 +407,6 @@ public abstract class HDFSWriterPoolMember extends WriterPoolMember implements A
 		}
 
 		this.sfWriter.close();
-		this.out = null;
 
 		if (this.fpath != null && this.fs.exists(fpath)) {
 			String path = this.fpath.toString();
