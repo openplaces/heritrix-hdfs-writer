@@ -78,7 +78,6 @@ public abstract class HDFSWriterPoolMember extends WriterPoolMember implements A
 	private FileSystem fs = null;
 
 	private final boolean compressed;
-	private String jobDir = null;
 	private String prefix = DEFAULT_PREFIX;
 	private String suffix = DEFAULT_SUFFIX;
 	private final long maxSize;   //pratyush
@@ -118,7 +117,7 @@ public abstract class HDFSWriterPoolMember extends WriterPoolMember implements A
 	}
 
 	public HDFSWriterPoolMember(AtomicInteger serialNo, HDFSParameters parameters) throws IOException {
-		this(serialNo, parameters.getJobDir(), parameters.getPrefix(), parameters.getSuffix(),
+		this(serialNo, parameters.getPrefix(), parameters.getSuffix(),
 				parameters.isCompression(), parameters.getMaxSize(), parameters.getHdfsReplication(),
 				parameters.getHdfsCompressionType(), parameters.getHdfsOutputPath(),
 				parameters.getHdfsFsDefaultName());
@@ -140,7 +139,7 @@ public abstract class HDFSWriterPoolMember extends WriterPoolMember implements A
 	 * @param hdfsFsDefaultName fs.default.name Hadoop property
 	 * @exception IOException
 	 */
-	public HDFSWriterPoolMember(AtomicInteger serialNo, final String jobDir, final String prefix, 
+	public HDFSWriterPoolMember(AtomicInteger serialNo, final String prefix, 
 			final String suffix, final boolean cmprs, final long maxSize, final int hdfsReplication,
 			final String hdfsCompressionType, final String hdfsOutputPath,
 			final String hdfsFsDefaultName)
@@ -151,8 +150,6 @@ public abstract class HDFSWriterPoolMember extends WriterPoolMember implements A
 		this.suffix = suffix;
 		this.prefix = prefix;
 		this.maxSize = maxSize;
-		int lastSlash = jobDir.lastIndexOf("/");
-		this.jobDir = (lastSlash == -1) ? jobDir : jobDir.substring(lastSlash+1);
 		this.compressed = cmprs;
 		this.serialNo = serialNo;
 		this.hdfsReplication = hdfsReplication;
@@ -172,7 +169,7 @@ public abstract class HDFSWriterPoolMember extends WriterPoolMember implements A
 		this.fs = FileSystem.get(hdfsConf);
 
 		// make sure the output directory exists
-		Path outputDir = new Path(this.hdfsOutputPath + "/" + this.jobDir);
+		Path outputDir = new Path(this.hdfsOutputPath);
 		fs.mkdirs(outputDir);
 	}
 
@@ -215,7 +212,7 @@ public abstract class HDFSWriterPoolMember extends WriterPoolMember implements A
 		close();
 
 		this.createTimestamp = tsn.getTimestamp();
-		fstr  = hdfsOutputPath + "/" + jobDir + "/" + name;
+		fstr  = hdfsOutputPath + "/" + name;
 		this.fpath = new Path(fstr);
 
 		// Determine SequenceFile compression type

@@ -93,40 +93,20 @@ public class HDFSParameters {
 	}
 	
 
-	private String jobDir				= null;
 	private String prefix				= "";
 	private String suffix				= "";
 	private boolean compression			= false;
-	private long maxSize;
+	private long maxSize				= 63*1024*1024;
 	private int hdfsReplication			= 3;
 	private String hdfsCompressionType	= "DEFAULT";
-	private String hdfsOutputPath		= null;
+	private String hdfsOutputPath		= "/crawl";
     private String hdfsFsDefaultName	= "hdfs://localhost:9000";
 
-	/*
-	 * @param serialNo  used to create unique filename sequences
-	 * @param jobDir Job directory
-	 * @param prefix File prefix to use.
-	 * @param cmprs Compress the records written. 
-	 * @param maxSize Maximum size for ARC files written.
-	 * @param hdfsReplication Replication factor for HDFS files
-	 * @param hdfsCompressionType Type of SequenceFile compression to use 
-	 * @param hdfsOutputPath Directory with HDFS where job content files
-	 *     will get written
-	 * @param hdfsFsDefaultName fs.default.name Hadoop property
-	 */
-
-	public String getJobDir() {
-		if (jobDir == null)
-			throw new RuntimeException("A job directory was never set for this object. " +
+	public String getPrefix() {
+		if (prefix.isEmpty())
+			throw new RuntimeException("A filename prefix was never set for this object. " +
 			"Define one before trying to access it.");
 
-		return jobDir;
-	}
-	public void setJobDir(String jobDir) {
-		this.jobDir = jobDir;
-	}
-	public String getPrefix() {
 		return prefix;
 	}
 	public void setPrefix(String prefix) {
@@ -167,10 +147,6 @@ public class HDFSParameters {
 		this.hdfsCompressionType = hdfsCompressionType;
 	}
 	public String getHdfsOutputPath() {
-		if (hdfsOutputPath == null)
-			throw new RuntimeException("An HDFS output path was never set for this object. " +
-			"Define one before trying to access it.");
-
 		return hdfsOutputPath;
 	}
 	public void setHdfsOutputPath(String hdfsOutputPath) {
