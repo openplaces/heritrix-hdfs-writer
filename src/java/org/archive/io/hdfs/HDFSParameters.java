@@ -99,9 +99,9 @@ public class HDFSParameters {
 	private boolean compression			= false;
 	private long maxSize;
 	private int hdfsReplication			= 3;
-	private String hdfsCompressionType	= "Record";
+	private String hdfsCompressionType	= "DEFAULT";
 	private String hdfsOutputPath		= null;
-    private String hdfsFsDefaultName	= "local";
+    private String hdfsFsDefaultName	= "hdfs://localhost:9000";
 
 	/*
 	 * @param serialNo  used to create unique filename sequences

@@ -37,7 +37,7 @@ import org.archive.util.DevUtils;
 
 
 
-public class HDFSWriter extends WriterPoolMemberHdfs {
+public class HDFSWriter extends HDFSWriterPoolMember {
 
 	@SuppressWarnings("unused")
 	private final Logger LOG = Logger.getLogger(this.getClass().getName());
@@ -126,7 +126,7 @@ public class HDFSWriter extends WriterPoolMemberHdfs {
     		} 
 
     	} finally {
-    		postWriteRecordTasks();
+    		postWriteRecordTasks(uri);
     	}
     }
 }

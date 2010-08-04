@@ -50,7 +50,7 @@ import org.apache.hadoop.fs.*;
  * @author Doug Judd
  * @version $Date: 2006/09/26 22:51:28 $ $Revision: 1.14.2.1 $
  */
-public abstract class WriterPoolMemberHdfs extends WriterPoolMember implements ArchiveFileConstants {
+public abstract class HDFSWriterPoolMember extends WriterPoolMember implements ArchiveFileConstants {
 
 	private final Logger LOGGER = Logger.getLogger(this.getClass().getName());
 
@@ -111,7 +111,7 @@ public abstract class WriterPoolMemberHdfs extends WriterPoolMember implements A
 	private final long maxSize;   //pratyush
 	private String hdfsOutputPath = null;
 	private String hdfsFsDefaultName = "local";
-	private String hdfsCompressionType = "Record";
+	private String hdfsCompressionType = "DEFAULT";
 	private Configuration hdfsConf = null;
 	private int hdfsReplication = 3;
 
@@ -146,11 +146,11 @@ public abstract class WriterPoolMemberHdfs extends WriterPoolMember implements A
 	private static NumberFormat serialNoFormatter = new DecimalFormat("00000");
 
 
-	public WriterPoolMemberHdfs(HDFSParameters parameters) throws IOException {
+	public HDFSWriterPoolMember(HDFSParameters parameters) throws IOException {
 		this(new AtomicInteger(), parameters);
 	}
 
-	public WriterPoolMemberHdfs(AtomicInteger serialNo, HDFSParameters parameters) throws IOException {
+	public HDFSWriterPoolMember(AtomicInteger serialNo, HDFSParameters parameters) throws IOException {
 		this(serialNo, parameters.getJobDir(), parameters.getPrefix(), parameters.getSuffix(),
 				parameters.isCompression(), parameters.getMaxSize(), parameters.getHdfsReplication(),
 				parameters.getHdfsCompressionType(), parameters.getHdfsOutputPath(),
@@ -173,11 +173,11 @@ public abstract class WriterPoolMemberHdfs extends WriterPoolMember implements A
 	 * @param hdfsFsDefaultName fs.default.name Hadoop property
 	 * @exception IOException
 	 */
-	public WriterPoolMemberHdfs(AtomicInteger serialNo, final String jobDir, final String prefix, 
+	public HDFSWriterPoolMember(AtomicInteger serialNo, final String jobDir, final String prefix, 
 			final String suffix, final boolean cmprs, final long maxSize, final int hdfsReplication,
 			final String hdfsCompressionType, final String hdfsOutputPath,
 			final String hdfsFsDefaultName)
-		throws IOException {
+			throws IOException {
 
 		super(serialNo, null, prefix, suffix, cmprs, maxSize, null);
 
@@ -199,11 +199,10 @@ public abstract class WriterPoolMemberHdfs extends WriterPoolMember implements A
 		this.hdfsFsDefaultName = hdfsFsDefaultName;
 		this.hdfsCompressionType = hdfsCompressionType;
 
-		hdfsConf = new Configuration();
+		this.hdfsConf = new Configuration();
 		hdfsConf.set("fs.default.name", this.hdfsFsDefaultName);
-		System.out.println("fs.default.name="+this.hdfsFsDefaultName);
 
-		fs = FileSystem.get(hdfsConf);
+		this.fs = FileSystem.get(hdfsConf);
 
 		// make sure the output directory exists
 		Path outputDir = new Path(this.hdfsOutputPath + "/" + this.jobDir);
@@ -223,9 +222,8 @@ public abstract class WriterPoolMemberHdfs extends WriterPoolMember implements A
 	 */
 	public void checkSize() throws IOException {
 		if (sfWriter == null ||
-				(this.maxSize != -1 && (this.sfWriter.getLength() > this.maxSize))) {
+				(this.maxSize != -1 && (this.sfWriter.getLength() > this.maxSize)))
 			createFile();
-		}
 	}
 
 	/**
@@ -241,11 +239,11 @@ public abstract class WriterPoolMemberHdfs extends WriterPoolMember implements A
 	 */
 	protected String createFile() throws IOException {
 		TimestampSerialno tsn = getTimestampSerialNo();
-		String name = this.prefix + '-' + getUniqueBasename(tsn) +
-		((this.suffix == null || this.suffix.length() <= 0)?
-				"": "-" + this.suffix) + OCCUPIED_SUFFIX;
 
-		// close existing file
+		String name = this.prefix + '-' + getUniqueBasename(tsn) +
+			((this.suffix == null || this.suffix.length() <= 0) ? "" : "-" + this.suffix) +
+			OCCUPIED_SUFFIX;
+
 		close();
 
 		this.createTimestamp = tsn.getTimestamp();
@@ -256,11 +254,12 @@ public abstract class WriterPoolMemberHdfs extends WriterPoolMember implements A
 		SequenceFile.CompressionType compType;
 		if (hdfsCompressionType.equals("DEFAULT")) {
 			String zname = hdfsConf.get("io.seqfile.compression.type");
+
 			compType = (zname == null) ? SequenceFile.CompressionType.RECORD : 
 				SequenceFile.CompressionType.valueOf(zname);
-		}
-		else
+		} else {
 			compType = SequenceFile.CompressionType.valueOf(hdfsCompressionType);
+		}
 
 		int origRep = hdfsConf.getInt("dfs.replication", -1);
 		hdfsConf.setInt("dfs.replication", hdfsReplication);
@@ -271,6 +270,7 @@ public abstract class WriterPoolMemberHdfs extends WriterPoolMember implements A
 		hdfsConf.setInt("dfs.replication", origRep);
 
 		LOGGER.info("Opened " + this.fpath.toString());
+
 		return this.fpath.toString();
 	}
 
@@ -303,7 +303,7 @@ public abstract class WriterPoolMemberHdfs extends WriterPoolMember implements A
 	 */
 	private String getUniqueBasename(TimestampSerialno tsn) {
 		return tsn.getTimestamp() + "-" + 
-			WriterPoolMemberHdfs.serialNoFormatter.format(tsn.getSerialNumber());
+			HDFSWriterPoolMember.serialNoFormatter.format(tsn.getSerialNumber());
 	}
 
 	/**
@@ -311,7 +311,7 @@ public abstract class WriterPoolMemberHdfs extends WriterPoolMember implements A
 	 */
 	private static class IntegerSerializer extends ByteArrayOutputStream {
 		DataOutputStream dos = null;
-		
+
 		public IntegerSerializer() {
 			super(4);
 			dos = new DataOutputStream(this);
@@ -337,6 +337,7 @@ public abstract class WriterPoolMemberHdfs extends WriterPoolMember implements A
 	 *
 	 * @exception IOException
 	 */
+	@Override
 	protected void preWriteRecordTasks() throws IOException {
 		checkSize();
 	}
@@ -356,6 +357,8 @@ public abstract class WriterPoolMemberHdfs extends WriterPoolMember implements A
 
 		if (accumBuffer.length > 1048576)
 			accumBuffer = new byte [ 262144 ];
+		
+		super.postWriteRecordTasks();
 	}
 
 	/**
@@ -454,7 +457,7 @@ public abstract class WriterPoolMemberHdfs extends WriterPoolMember implements A
 			}
 
 			// not getting size here because it adds more dependency on HDFS
-			LOGGER.info("Closed " + this.fpath.toString() + ", size ");
+			LOGGER.info("Closed file: " + this.fpath.toString());
 		}
 	}
 
