@@ -23,6 +23,7 @@
 package org.archive.io.hdfs;
 
 import java.io.ByteArrayOutputStream;
+import java.io.Closeable;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -51,7 +52,7 @@ import org.archive.util.TimestampSerialno;
  * @author Doug Judd
  * @version $Date: 2006/09/26 22:51:28 $ $Revision: 1.14.2.1 $
  */
-public abstract class HDFSWriterPoolMember extends WriterPoolMember implements ArchiveFileConstants {
+public abstract class HDFSWriterPoolMember extends WriterPoolMember implements ArchiveFileConstants, Closeable {
 
 	private final Logger LOGGER = Logger.getLogger(this.getClass().getName());
 
@@ -401,6 +402,7 @@ public abstract class HDFSWriterPoolMember extends WriterPoolMember implements A
 		accumBuffer = newBuf;
 	}
 
+	@Override
 	public void close() throws IOException {
 		if (this.sfWriter == null) {
 			return;
