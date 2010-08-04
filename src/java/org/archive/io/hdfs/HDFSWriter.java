@@ -32,36 +32,32 @@ import org.apache.log4j.Logger;
 import org.archive.io.RecordingInputStream;
 import org.archive.io.RecordingOutputStream;
 import org.archive.io.ReplayInputStream;
-import org.archive.io.WriterPoolMember;
 import org.archive.modules.CrawlURI;
 import org.archive.util.DevUtils;
 
 
 
-public class HDFSWriter extends WriterPoolMember {
+public class HDFSWriter extends WriterPoolMemberHdfs {
 
+	@SuppressWarnings("unused")
 	private final Logger LOG = Logger.getLogger(this.getClass().getName());
-	public String HDFSWRITER_ID = "HDFSWriter/0.2";
 
+	public String HDFSWRITER_ID = "HDFSWriter/0.3";
+
+	@SuppressWarnings("unused")
 	private HDFSParameters _parameters;
 
 	public HDFSWriter(HDFSParameters parameters) throws IOException {
-		super(null, null, null, false, null);
-		
+		super(parameters);
 		this._parameters = parameters;
 	}
 
     private int mCaptureStreamCapacity = 262144;
-    private ByteArrayOutputStream mCaptureStream = new ByteArrayOutputStream(262144);
+    private ByteArrayOutputStream mCaptureStream = new ByteArrayOutputStream(mCaptureStreamCapacity);
 
-
-    protected String createFile()
-    throws IOException {
-        return super.createFile();
-    }
 
     /**
-     * write method
+     * Write
      *
      * @param uri URI of crawled document
      * @param fieldBytes block of fields to write to output after header line
@@ -69,67 +65,68 @@ public class HDFSWriter extends WriterPoolMember {
      * @param ris recording input stream that captured the response
      */
     public void write(final CrawlURI curi, byte [] fieldBytes, RecordingOutputStream ros,
-		      RecordingInputStream ris) throws IOException {
+    		RecordingInputStream ris) throws IOException {
     	String uri = curi.toString();
     	ReplayInputStream replayStream = null;
-        
+
     	preWriteRecordTasks();
 
     	try {
-            try {
+    		try {
 
-		int recordLength = 256 + fieldBytes.length + (int)ros.getSize() + (int)ris.getSize();
+    			int recordLength = 256 + fieldBytes.length + (int)ros.getSize() + (int)ris.getSize();
 
-		if (mCaptureStreamCapacity < recordLength) {
-		    mCaptureStreamCapacity = recordLength + 8192;
-		    mCaptureStream = 
-			new ByteArrayOutputStream(mCaptureStreamCapacity);
-		}
-		else
-		    mCaptureStream.reset();
-		
-		byte [] CRLF_BYTES = CRLF.getBytes();
+    			if (mCaptureStreamCapacity < recordLength) {
+    				mCaptureStreamCapacity = recordLength + 8192;
+    				mCaptureStream = new ByteArrayOutputStream(mCaptureStreamCapacity);
+    			} else {
+    				mCaptureStream.reset();
+    			}
 
-		// write header line
-		mCaptureStream.write(HDFSWRITER_ID.getBytes());
-		mCaptureStream.write(CRLF_BYTES);
+    			byte [] CRLF_BYTES = CRLF.getBytes();
 
-		// write fields
-		mCaptureStream.write(fieldBytes);
+    			// write header line
+    			mCaptureStream.write(HDFSWRITER_ID.getBytes());
+    			mCaptureStream.write(CRLF_BYTES);
 
-		// write request
-		char [] uriChars = uri.toCharArray();
-		if ((uriChars[0] == 'h' || uriChars[0] == 'H') &&
-		    (uriChars[1] == 't' || uriChars[1] == 'T') &&
-		    (uriChars[2] == 't' || uriChars[2] == 'T') &&
-		    (uriChars[3] == 'p' || uriChars[3] == 'P')) {
-		    replayStream = ros.getReplayInputStream();
-		    replayStream.readFullyTo(mCaptureStream);
-		    replayStream.close();
-		}
+    			// write fields
+    			mCaptureStream.write(fieldBytes);
 
-		// write response
-		replayStream = ris.getReplayInputStream();
-                replayStream.readFullyTo(mCaptureStream);
-		write(mCaptureStream.toByteArray());
-		
-                long remaining = replayStream.remaining();
-                // Should be zero at this stage.  If not, something is
-                // wrong.
-                if (remaining != 0) {
-                    String message = "Gap between expected and actual: " +
-                        remaining + "\n" + DevUtils.extraInfo() +
-                        " writing arc ";
-                    DevUtils.warnHandle(new Throwable(message), message);
-                    throw new IOException(message);
-                }
-            } finally {
-		if (replayStream != null)
-		    replayStream.close();
-            } 
-            
-        } finally {
-            postWriteRecordTasks();
-        }
+    			// write request
+    			char [] uriChars = uri.toCharArray();
+    			if ((uriChars[0] == 'h' || uriChars[0] == 'H') &&
+    					(uriChars[1] == 't' || uriChars[1] == 'T') &&
+    					(uriChars[2] == 't' || uriChars[2] == 'T') &&
+    					(uriChars[3] == 'p' || uriChars[3] == 'P')) {
+    				replayStream = ros.getReplayInputStream();
+    				replayStream.readFullyTo(mCaptureStream);
+    				replayStream.close();
+    			}
+
+    			// write response
+    			replayStream = ris.getReplayInputStream();
+    			replayStream.readFullyTo(mCaptureStream);
+    			write(mCaptureStream.toByteArray());
+
+    			long remaining = replayStream.remaining();
+
+    			// Should be zero at this stage.  If not, something is
+    			// wrong.
+    			if (remaining != 0) {
+    				String message = "Gap between expected and actual: " +
+    					remaining + "\n" + DevUtils.extraInfo() + "writing arc ";
+
+    				DevUtils.warnHandle(new Throwable(message), message);
+
+    				throw new IOException(message);
+    			}
+    		} finally {
+    			if (replayStream != null)
+    				replayStream.close();
+    		} 
+
+    	} finally {
+    		postWriteRecordTasks();
+    	}
     }
 }
