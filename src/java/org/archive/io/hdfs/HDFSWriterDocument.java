@@ -31,6 +31,7 @@ import java.io.DataOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
@@ -38,6 +39,7 @@ import java.util.Iterator;
 import java.util.StringTokenizer;
 import java.util.Map.Entry;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.io.Writable;
 import org.apache.log4j.Logger;
 import org.archive.io.hdfs.util.ByteScan;
@@ -54,7 +56,7 @@ public class HDFSWriterDocument implements Writable {
 	private final Logger LOG = Logger.getLogger(this.getClass().getName());
 
 	private byte [] header =
-	{ 'H','D','F','S','W','r','i','t','e','r','/','0','.','2','\r','\n' };
+	{ 'H','D','F','S','W','r','i','t','e','r','/','0','.','3','\r','\n' };
 
 	private char [] contentTypeChars =
 	{ 'c','o','n','t','e','n','t','-','t','y','p','e' };
@@ -102,10 +104,20 @@ public class HDFSWriterDocument implements Writable {
 	public int getRequestOffset() { return requestOffset; }
 	public int getRequestLength() { return requestLength; }
 
+	public String getRequestString() throws UnsupportedEncodingException {
+		return StringUtils.chomp(
+				new String(getRequestBytes(), getRequestOffset(), getRequestLength(), getValidCharset()));
+	}
+
 	public byte [] getResponseBytes() { return (responseBase != null) ? responseBase : buf; }
 	public int getResponseOffset() { return responseOffset; }
 	public int getResponseBodyOffset() { return responseBodyOffset; }
 	public int getResponseLength() { return responseLength; }
+
+	public String getResponseString() throws UnsupportedEncodingException {
+		return StringUtils.chomp(
+				new String(getResponseBytes(), getResponseOffset(), getResponseLength(), getValidCharset()));
+	}
 
 	public int getResponseCode() { return responseCode; }
 
@@ -224,6 +236,10 @@ public class HDFSWriterDocument implements Writable {
 		isModified = true;
 	}
 
+	public void load(byte [] docBytes) throws IOException {
+		load(docBytes, 4, docBytes.length-4);
+	}
+
 	/**
 	 * Parses the given document, populating all of the interal attributes
 	 *
@@ -231,8 +247,7 @@ public class HDFSWriterDocument implements Writable {
 	 * @param offset offset into <code>docBytes</code> where document begins
 	 * @param length length of document
 	 */
-	public void load(byte [] docBytes, int offset, int length)
-	throws IOException {
+	public void load(byte [] docBytes, int offset, int length) throws IOException {
 		int base;
 
 		isHttp = false;
@@ -289,8 +304,7 @@ public class HDFSWriterDocument implements Writable {
 			if (buf[pos] == '\n') {
 				pos++;
 				break;
-			}
-			else if (buf[pos] == '\r' && buf[pos+1] == '\n') {
+			} else if (buf[pos] == '\r' && buf[pos+1] == '\n') {
 				pos += 2;
 				break;
 			}
@@ -304,23 +318,29 @@ public class HDFSWriterDocument implements Writable {
 			if (buf[pos] == '\n') {
 				pos++;
 				break;
-			}
-			else {
+			} else {
 				boolean isUrl = false;
 				String label = new String(buf, base, pos-base);
 				if (pos-base >= 3 &&
 						buf[base]=='U' && buf[base+1]=='R' && buf[base+2]=='L')
 					isUrl = true;
+
 				pos++;
+
 				// skip whitespace
 				while (pos < this.length && (buf[pos] == ' ' || buf[pos]=='\t'))
 					pos++;
+
 				base = pos;
+
 				// find LF
 				while (pos < this.length && buf[pos] != '\n')
 					pos++;
+
 				int endpos = (buf[pos-1] == '\r') ? pos-1 : pos;
+
 				String value = new String(buf, base, endpos-base);
+
 				// check for http
 				if (isUrl) {
 					url = value;
@@ -330,8 +350,10 @@ public class HDFSWriterDocument implements Writable {
 						isHttp = scheme.equals("http") ? true : false;
 					}
 				}
+
 				if (value.length() > 0)
 					fieldMap.put(label, value);
+
 				pos++;
 			}
 		}

@@ -209,8 +209,7 @@ public class HDFSWriterProcessor extends WriterPoolProcessor {
         	writer.write(curi, namedFieldsBlock, curi.getRecorder().getRecordedOutput(),	
         			curi.getRecorder().getRecordedInput());	    
 
-	    	LOG.info("HDFSWriterProcessor: Successfully written url " + 
-	    		curi.getBaseURI());
+	    	LOG.info("HDFSWriterProcessor: Successfully written url " + curi.getBaseURI());
         } catch (IOException e) {
             // Invalidate this file (It gets a '.invalid' suffix).
             getPool().invalidateFile(writerPoolMember);
