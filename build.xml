@@ -129,7 +129,6 @@
   <!-- ================================================================== -->
   <target name="tar" depends="package">
     <mkdir dir="${releases.dir}" />
-    <copy file="${build.dir}/${final.name}.jar" todir="${lib.dir}"/>
     <tar longfile="gnu" compression="gzip" destfile="${releases.dir}/${final.name}.tar.gz">
       <tarfileset dir="${basedir}" mode="664">
         <include name="README.txt" />
@@ -178,7 +177,6 @@
         <include name="${final.name}.jar" />
       </tarfileset>
     </tar>
-    <delete file="${lib.dir}/${final.name}.jar" />
   </target>
 	
   <!-- ================================================================== -->
