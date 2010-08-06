@@ -201,10 +201,12 @@ public class HDFSWriterProcessor extends WriterPoolProcessor {
 				break;
 
 			seed = seed.getFullVia();
-			seedUrl = seed.toString();
 
 			count--;
 		}
+
+		if (seed != null && seed.isSeed())
+			seedUrl = seed.toString();
 
 		ANVLRecord record = new ANVLRecord();
 		record.addLabelValue(getHdfsParameters().getUrlFieldName(), curi.toString());
