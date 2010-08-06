@@ -196,17 +196,14 @@ public class HDFSWriterProcessor extends WriterPoolProcessor {
 		// Set a limit on the number of times to recurse
 		int count = 50;
 
-		if (seed != null) {
-			while (!seed.isSeed()) {
-				if (count == 0)
-					break;
+		while (seed != null && !seed.isSeed()) {
+			if (count == 0)
+				break;
 
-				seed = seed.getFullVia();
-
-				count--;
-			}
-
+			seed = seed.getFullVia();
 			seedUrl = seed.toString();
+
+			count--;
 		}
 
 		ANVLRecord record = new ANVLRecord();
