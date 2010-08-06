@@ -31,15 +31,17 @@ public class HDFSParameters {
     public static final String NAMED_FIELD_IS_SEED			= "Is-Seed";
     public static final String NAMED_FIELD_URL				= "URL";
     public static final String NAMED_FIELD_VIA				= "Via";
+    public static final String NAMED_FIELD_SEED_URL			= "Seed-Url";
     public static final String NAMED_FIELD_REQUEST			= "Request";
     public static final String NAMED_FIELD_RESPONSE			= "Response";
 
+	private String urlFieldName				= NAMED_FIELD_URL;
     private String crawlTimeFieldName		= NAMED_FIELD_CRAWL_TIME;
 	private String ipFieldName				= NAMED_FIELD_IP;
 	private String pathFromSeedFieldName	= NAMED_FIELD_PATH_FROM_SEED;
 	private String isSeedFieldName			= NAMED_FIELD_IS_SEED;
 	private String viaFieldName				= NAMED_FIELD_VIA;
-	private String urlFieldName				= NAMED_FIELD_URL;
+	private String seedUrlFieldName			= NAMED_FIELD_SEED_URL;
 	private String requestFieldName			= NAMED_FIELD_REQUEST;
 	private String responseFieldName		= NAMED_FIELD_RESPONSE;
 
@@ -72,6 +74,12 @@ public class HDFSParameters {
 	}
 	public void setViaFieldName(String viaFieldName) {
 		this.viaFieldName = viaFieldName;
+	}
+	public void setSeedUrlFieldName(String seedUrlName) {
+		this.seedUrlFieldName = seedUrlName;
+	}
+	public String getSeedUrlFieldName() {
+		return seedUrlFieldName;
 	}
 	public String getUrlFieldName() {
 		return urlFieldName;
@@ -158,4 +166,5 @@ public class HDFSParameters {
 	public void setHdfsFsDefaultName(String hdfsFsDefaultName) {
 		this.hdfsFsDefaultName = hdfsFsDefaultName;
 	}
+
 }
